@@ -1,154 +1,51 @@
-# Coding Posture Engine
+# Coding Posture
 
-Task-aware operating modes for coding agents. It is a small Hermes plugin, a Pi package, and a standalone CLI prompt wrapper for Claude Code, Codex, and Pi-style agent commands.
+A small skill that gives coding agents **task-aware working modes**. Before non-trivial work, the agent picks a mode — `debug`, `fix`, `review`, `test-first`, `refactor`, `migrate`, `spike`, `unstuck` — and follows its checklist.
 
-The point is not to make coding agents theatrical. The point is to stop them from behaving like optimistic elevators with write access.
+The point is not to make agents theatrical. It is to stop them from behaving like optimistic elevators with write access: thrashing on a stuck bug, faking green tests, skipping reproduction, running destructive commands, or migrating without a rollback.
 
-## What it does
+## Design
 
-Given a task prompt, the engine selects a **coding posture** such as:
+The whole product is one file: [`skills/coding-posture/SKILL.md`](skills/coding-posture/SKILL.md). There is no selection engine and no code. The agent reads the modes and chooses the one that fits the task's context.
 
-- `forensic-debugger` — reproduce first, gather evidence, isolate root cause.
-- `surgical-fixer` — minimal low-risk fix, no opportunistic cleanup.
-- `entropy-auditor` — review/security posture for invariants and edge cases.
-- `test-zealot` — TDD-heavy posture for behavior changes.
-- `prototype-goblin` — isolated spike mode.
-- `ops-runner` — git, CI, build, release, and package-manager chores.
-- `cautious-migrator` — migrations/infra with rollback thinking.
-- `stuck-investigator` — stop thrashing after repeated failures.
+Two deliberate choices, both grounded in research:
 
-It can then render a compact prompt block for another coding agent.
+- **Modes are procedures, not personas.** Naming a role ("act as an expert debugger") does not reliably change model behavior ([Zheng et al., EMNLP 2024](https://aclanthology.org/2024.findings-emnlp.888/)). Specifying a _procedure_ does ([self-consistency / CoT](https://arxiv.org/abs/2203.11171); role-play helps only [as an implicit CoT trigger](https://arxiv.org/html/2308.07702v2)). So each mode is a checklist, not a character.
+- **The model self-selects; no keyword router.** Context-based strategy selection beats fixed keyword rules ([Route-to-Reason, 2025](https://arxiv.org/html/2505.19435v1)), and self-selection works on strong models — exactly the targets here. So selection lives in the agent, not in a brittle scoring table.
 
-## Pi package install
+## Install
 
-Pi packages are installed from git/npm/local paths. This repository now declares Pi resources in `package.json` under the `pi` key:
+It is a standard [`SKILL.md`](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills) skill, so it works unmodified across compatible agents.
 
-- `extensions/coding-posture.ts` — Pi extension with ephemeral `context` injection, `/posture`, and tools.
-- `skills/coding-posture/SKILL.md` — Pi skill for posture selection discipline.
-- `prompts/posture-task.md` — `/posture-task` prompt template for explicit posture runs without conflicting with the extension command.
+**Hermes:** drop `skills/coding-posture/` into `~/.hermes/skills/` (the default skills dir); Hermes auto-discovers it on startup. It also supports installing a skill by hub name or from a URL — see the [Hermes skills docs](https://hermes-agent.nousresearch.com/docs/guides/work-with-skills) for the current command.
 
-Install from GitHub:
+**Claude Code / Codex / Cursor:** copy `skills/coding-posture/` into the agent's skills directory (e.g. `~/.claude/skills/coding-posture/`).
+
+**Pi:**
 
 ```bash
-pi install git:github.com/alexei-led/coding-posture-engine@v0.1.2
-# or test without installing for the current run:
-pi -e git:github.com/alexei-led/coding-posture-engine@v0.1.2
+pi install git:github.com/alexei-led/coding-posture-engine
 ```
 
-Local development:
+The agent activates the skill from its `description` when a coding task starts.
 
-```bash
-pi install /Users/alexei/projects/coding-posture-engine
-# or temporary:
-pi -e /Users/alexei/projects/coding-posture-engine
-```
+## Modes
 
-The Pi extension registers:
+| Mode         | Use when                                 | Core discipline                                     |
+| ------------ | ---------------------------------------- | --------------------------------------------------- |
+| `debug`      | failing test, bug, regression            | reproduce first, one hypothesis at a time           |
+| `fix`        | small known urgent change                | smallest diff, no opportunistic cleanup             |
+| `review`     | security/auth/payments, reviewing a diff | no approval without file/line evidence              |
+| `test-first` | behavior change, tests practical         | see RED before implementing, never fake green       |
+| `refactor`   | cleanup, simplify, rename                | preserve behavior, prove equivalence                |
+| `migrate`    | schema/data/infra change                 | rollback path before touching state                 |
+| `spike`      | prototype, PoC, unknown library          | isolate, end with a verdict                         |
+| `unstuck`    | repeated failures, thrashing             | stop editing, summarize evidence, narrow hypotheses |
 
-- `context` hook — injects an ephemeral hidden posture message for coding-related prompts without storing it in the session.
-- `/posture` command — select or render a posture in the TUI.
-- `coding_posture_select` tool — returns selected posture JSON.
-- `coding_posture_render` tool — returns a posture prompt block.
+Plus invariants that hold in every mode: no destructive commands without explicit scope, verify by running the real check (not by re-reading — [self-correction without external feedback degrades results](https://arxiv.org/abs/2310.01798)), and never report a result you did not run. The modes lean on the practices with the strongest evidence for coding agents: tight [execution-feedback loops](https://arxiv.org/abs/2304.05128), [gathering context before editing rather than rushing to patch](https://arxiv.org/abs/2604.02547), precise fault localization, small diffs, [clarifying underspecified requirements before coding](https://arxiv.org/pdf/2310.10996), and refusing to [game the tests](https://arxiv.org/abs/2604.15149).
 
-## Hermes plugin install
+## Status
 
-Directory install:
+This is an MVP. It is deliberately small: no code, no model calls, no network, no secrets. The bet is that procedural checklists aimed at known model failure modes are useful defaults. **That bet is not yet measured** — there is no eval here comparing agent behavior with and without the skill. Treat the modes as disciplined defaults, not a guarantee.
 
-```bash
-git clone https://github.com/alexei-led/coding-posture-engine ~/.hermes/plugins/coding-posture-engine
-hermes config set plugins.enabled '["coding-posture-engine"]'
-# restart Hermes / gateway or start a new session
-```
-
-The plugin registers:
-
-- `pre_llm_call` hook — injects a compact posture block into coding-related Hermes turns.
-- `/posture` slash command — select or render a posture in chat.
-- `coding_posture_select` tool — returns selected posture JSON.
-- `coding_posture_render` tool — returns selected posture plus prompt block.
-
-## CLI install
-
-```bash
-git clone https://github.com/alexei-led/coding-posture-engine
-cd coding-posture-engine
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -e .
-```
-
-## CLI usage
-
-Select posture:
-
-```bash
-coding-posture select fix failing pytest regression with traceback
-```
-
-Render prompt for Claude Code:
-
-```bash
-coding-posture --agent claude render --include-task fix failing pytest regression
-```
-
-Run Claude Code with posture prompt:
-
-```bash
-coding-posture --agent claude run fix failing pytest regression
-```
-
-Run Codex with posture prompt:
-
-```bash
-coding-posture --agent codex run review auth diff for security regressions
-```
-
-Generic Pi CLI wrapper:
-
-```bash
-# Uses `pi -p` by default and passes the whole posture+task prompt as one argument.
-PI_CLI=pi coding-posture --agent pi run prototype a small API client
-```
-
-For native Pi package integration, prefer `pi install git:github.com/alexei-led/coding-posture-engine@v0.1.2`.
-
-## Safety model
-
-Priority order:
-
-```text
-system/safety > user instruction > project rules > task plan > coding posture > style
-```
-
-A posture may increase verification, reduce risk tolerance, or constrain diff size. It must never authorize unsafe commands, fabricate test results, or ignore project instructions.
-
-## Development
-
-Run tests:
-
-```bash
-python3 -m pytest -q
-```
-
-Run without installing:
-
-```bash
-PYTHONPATH=. python3 -m coding_posture_engine.cli --agent claude render --include-task fix failing tests
-```
-
-## Repository status
-
-This is an MVP. The initial version is deliberately small:
-
-- no model calls;
-- no network calls;
-- no secrets;
-- no Hermes source patches;
-- deterministic heuristic selection.
-
-Future work:
-
-- learn from task outcomes;
-- add Kanban task metadata support;
-- add richer wrappers for specific external CLIs;
-- expose a stable JSON schema for posture cards.
+Future work: an eval harness that measures behavior change on fixed tasks; refine the mode set from what actually moves outcomes.
