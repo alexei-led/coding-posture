@@ -4,14 +4,21 @@ A small skill that gives coding agents **task-aware working modes**. Before non-
 
 The point is not to make agents theatrical. It is to stop them from behaving like optimistic elevators with write access: thrashing on a stuck bug, faking green tests, skipping reproduction, running destructive commands, or migrating without a rollback.
 
-## Design
+## How it works — theory and evidence
 
-The whole product is one file: [`skills/coding-posture/SKILL.md`](skills/coding-posture/SKILL.md). There is no selection engine and no code. The agent reads the modes and chooses the one that fits the task's context.
+The whole product is one file: [`skills/coding-posture/SKILL.md`](skills/coding-posture/SKILL.md). No engine, no code — the agent reads the modes and picks the one that fits. So the real question is why a short procedural checklist in the context changes what a model does. Each claim below is labelled by how strong the evidence actually is.
 
-Two deliberate choices, both grounded in research:
+**Mechanism: in-context conditioning** _(well-supported substrate, not a complete theory)._ A worked procedure acts as an in-context demonstration — the model conditions its next tokens on the shown trajectory, not just the final answer. This is the mechanism behind chain-of-thought ([Wei et al., 2022](https://arxiv.org/abs/2201.11903)). Mechanistic work traces part of in-context learning to specific attention circuits — induction heads ([Olsson et al., 2022](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html)) and iteration heads ([NeurIPS 2024](https://proceedings.neurips.cc/paper_files/paper/2024/file/c50f8180ef34060ec59b75d6e1220f7a-Paper-Conference.pdf)) — and a formal [ICL analysis of CoT (ICML 2024)](https://icml.cc/virtual/2024/38391). No complete mechanistic theory of frontier-model reasoning exists yet; this is a grounded substrate, not a proof.
 
-- **Modes are procedures, not personas.** Naming a role ("act as an expert debugger") does not reliably change model behavior ([Zheng et al., EMNLP 2024](https://aclanthology.org/2024.findings-emnlp.888/)). Specifying a _procedure_ does ([self-consistency / CoT](https://arxiv.org/abs/2203.11171); role-play helps only [as an implicit CoT trigger](https://arxiv.org/html/2308.07702v2)). So each mode is a checklist, not a character.
-- **The model self-selects; no keyword router.** Context-based strategy selection beats fixed keyword rules ([Route-to-Reason, 2025](https://arxiv.org/html/2505.19435v1)), and self-selection works on strong models — exactly the targets here. So selection lives in the agent, not in a brittle scoring table.
+**Procedures, not personas** _(supported guideline, not a universal law)._ A persona ("act as an expert debugger") mostly sets style; a procedure supplies structure the model can follow. Adding personas to system prompts does not reliably improve accuracy ([Zheng et al., EMNLP 2024](https://aclanthology.org/2024.findings-emnlp.888/)), whereas process prompting does on reasoning tasks ([self-consistency](https://arxiv.org/abs/2203.11171); role-play helps mainly [as an implicit CoT trigger](https://arxiv.org/html/2308.07702v2)). So each mode is a checklist, not a character. This is a robust empirical guideline for reasoning-heavy work — not proven for every task.
+
+**The model self-selects; no keyword router** _(holds for strong models, not universally)._ Choosing the right procedure from context is a meta-reasoning step strong models do well, and context-based selection beats brittle keyword matching ([Route-to-Reason, 2025](https://arxiv.org/abs/2505.19435)). Honest caveat: self-selection is not categorically better than a fixed router — it depends on a strong, calibrated model. The targets here (Claude, Codex, etc.) qualify; a weak model would need a trained router instead.
+
+**What the checklists encode** _(highest-evidence levers; documented failure modes)._ Ground "done" in a real run rather than re-reading ([self-debug, Chen et al. 2023](https://arxiv.org/abs/2304.05128); [intrinsic self-correction degrades without external feedback, Huang et al. 2023](https://arxiv.org/abs/2310.01798)); gather context before editing instead of rushing to patch ([Beyond Resolution Rates, 2026](https://arxiv.org/abs/2604.02547)); refuse to game the grader ([verifier gaming, 2026](https://arxiv.org/abs/2604.15149)). That structured procedures improve coding-agent reliability is directionally supported across agent and benchmark studies — but there is no single clean checklist-vs-free-form RCT, which is exactly why this repo ships its own eval rather than asserting an effect.
+
+**Evidence from our own eval** _(directional; one run, one model)._ [`eval/`](eval/) runs each task with and without the skill (LLM judge + baseline; reuses `agent-skills-eval`). On the current 5-case set: **+15pp** (numbers in Status). A single run on `gpt-5.4-mini` that injects the skill text — so it tests whether the content shifts behavior, not the deployed activation path, and it is directional evidence, not a settled effect size.
+
+**Why it stays small** _(real effect, no magic number)._ Instruction-following degrades as a prompt grows long and complex, so a short, relevant, followable procedure conditions behavior more reliably than a long aspirational document. The simplicity is the design. (Beware the widely repeated "LLMs follow ~150–200 instructions" figure — it has no peer-reviewed source; the real, unquantified effect is degradation with length and complexity.)
 
 ## Install
 
@@ -60,6 +67,6 @@ Two load disciplines, and the split matters:
 
 ## Status
 
-This is an MVP. The bet is that procedural checklists aimed at known model failure modes are useful defaults. **That bet is still unproven on numbers** — but it is now testable: [`eval/`](eval/) provides a with/without-skill behavioral eval that reuses the `agent-skills-eval` runner. Run it (paid) to measure lift; until then, treat the modes as disciplined defaults, not a guarantee.
+This is an MVP. The bet is that procedural checklists aimed at known model failure modes are useful defaults. **Initial numbers support it:** the behavioral eval ([`eval/`](eval/)) shows **85% with-skill vs 70% without (+15pp)**; the auth-urgency case specifically went 4/4 with-skill vs 2/4 without. These are single-run numbers on one model — treat them as directional, not definitive.
 
-Future work: run the eval and refine the mode set from what actually moves outcomes.
+Future work: run broader evals across models and refine the mode set from what actually moves outcomes.
