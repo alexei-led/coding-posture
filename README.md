@@ -1,6 +1,6 @@
 # Coding Posture
 
-A small skill that gives coding agents **task-aware working modes**. Before non-trivial work, the agent picks a mode — `debug`, `fix`, `review`, `test-first`, `refactor`, `migrate`, `spike`, `unstuck` — and follows its checklist.
+A small skill that gives coding agents **task-aware working modes**. Before non-trivial work, the agent picks a mode — `debug`, `fix`, `review`, `test-first`, `refactor`, `optimize`, `migrate`, `upgrade`, `integrate`, `spike`, `unstuck` — and follows its checklist.
 
 The point is not to make agents theatrical. It is to stop them from behaving like optimistic elevators with write access: thrashing on a stuck bug, faking green tests, skipping reproduction, running destructive commands, or migrating without a rollback.
 
@@ -37,12 +37,26 @@ The agent activates the skill from its `description` when a coding task starts.
 | `fix`        | small known urgent change                | smallest diff, no opportunistic cleanup             |
 | `review`     | security/auth/payments, reviewing a diff | no approval without file/line evidence              |
 | `test-first` | behavior change, tests practical         | see RED before implementing, never fake green       |
-| `refactor`   | cleanup, simplify, rename                | preserve behavior, prove equivalence                |
+| `refactor`   | cleanup, simplify, rename                | preserve behavior, trace call sites before deleting |
+| `optimize`   | performance work, hot path               | measure first, baseline before/after                |
 | `migrate`    | schema/data/infra change                 | rollback path before touching state                 |
+| `upgrade`    | dependency or version bump               | read breaking changes, no blind search-replace      |
+| `integrate`  | calling an external API/service          | read the contract, handle the error paths           |
 | `spike`      | prototype, PoC, unknown library          | isolate, end with a verdict                         |
 | `unstuck`    | repeated failures, thrashing             | stop editing, summarize evidence, narrow hypotheses |
 
 Plus invariants that hold in every mode: no destructive commands without explicit scope, verify by running the real check (not by re-reading — [self-correction without external feedback degrades results](https://arxiv.org/abs/2310.01798)), and never report a result you did not run. The modes lean on the practices with the strongest evidence for coding agents: tight [execution-feedback loops](https://arxiv.org/abs/2304.05128), [gathering context before editing rather than rushing to patch](https://arxiv.org/abs/2604.02547), precise fault localization, small diffs, [clarifying underspecified requirements before coding](https://arxiv.org/pdf/2310.10996), and refusing to [game the tests](https://arxiv.org/abs/2604.15149).
+
+## Where this fits
+
+Coding agents already enforce baseline discipline in their system prompts (reproduce bugs, run tests, small diffs), and good `CLAUDE.md`/`AGENTS.md` files repeat it. This skill earns its place only as the _delta_: the anti-instincts agents get wrong by default — stop thrashing, don't game the grader, roll back before migrating, measure before optimizing, read the API contract — plus a catalog of task modes too large to keep always-on.
+
+Two load disciplines, and the split matters:
+
+- **Always-on** (`CLAUDE.md` / `AGENTS.md`, system prompt): universal invariants you want on every turn. The "Always" block here — verify by running, never fake green, no destructive commands without scope — is most reliable when you also paste it into your always-on instructions, because a conditionally-loaded skill can fail to activate.
+- **Conditional** (this skill): the per-task mode checklists, loaded only when relevant. That is the reason this is a skill and not eleven checklists bloating every turn.
+
+[Anthropic's skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) is evaluation-driven: keep only what measurably closes a gap. See Status.
 
 ## Status
 

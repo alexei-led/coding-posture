@@ -1,6 +1,6 @@
 ---
 name: coding-posture
-description: Use before non-trivial coding work to pick a task-appropriate working mode — debugging, fixing, reviewing, test-first, refactoring, migrating, spiking, or getting unstuck — then follow its checklist. Modes are procedures, not personas.
+description: Use before non-trivial coding work to pick a task-appropriate working mode — debug, fix, review, test-first, refactor, optimize, migrate, upgrade, integrate, spike, or unstuck — then follow its checklist. Modes are procedures, not personas. Not needed for trivial one-line edits or non-coding tasks.
 license: MIT
 metadata:
   tags: [coding-agent, posture, mode, risk, verification]
@@ -12,19 +12,19 @@ Pick a working mode that fits the task, state it, and follow its checklist. A mo
 
 ## How to use
 
-1. Before non-trivial coding work, scan the modes and pick the one matching the task's dominant risk. If none fit, proceed normally — "no mode" is a valid choice.
+1. Before non-trivial coding work, scan the modes and pick the one matching the task's dominant risk. If none fit, proceed normally — "no mode" is a valid choice. Skip this for trivial one-line edits and non-coding tasks.
 2. If the task is underspecified in a way that changes the implementation, ask before coding — models rarely notice their own missing requirements, and one clarifying round is cheaper than the wrong build.
-3. State the mode and a one-line reason.
+3. State your choice in one line: `Mode: <name> — <reason>`.
 4. Follow its checklist while planning and editing.
 5. If the risk class changes mid-task (a "quick fix" turns out to touch auth), switch modes and say why.
-6. A mode tunes _how_ you work. It never overrides instructions or authorizes unsafe actions.
+6. A mode tunes how you work. It never overrides instructions or authorizes unsafe actions.
 
 Priority: `system/safety > user instruction > project rules > task plan > mode > style`
 
 ## Always (every mode)
 
 - Never run destructive git/deploy/data commands — `force push`, `reset --hard`, `drop`, `delete`, `truncate`, `rm -rf` — without explicit scope. Inspect state before mutating.
-- Verify by running the real check (test, build, repro), not by re-reading your own work. Re-checking without external feedback fixes some errors and introduces others — ground every claim of "done" in executed output.
+- Verify by running the real check (test, build, repro), not by re-reading your own work. Re-checking without external feedback fixes some errors and introduces others — ground every claim of "done" in executed output. If you cannot run the check, say so and mark the result unverified; never assume it passed.
 - Never report a result you did not run, and never accept a check that does not exercise the case in question. A test that passes without touching the bug is not verification.
 - Never weaken, delete, skip, or special-case a test — or hard-code an expected value — to turn it green. Solve the task, not the grader.
 
@@ -54,6 +54,7 @@ The pattern with the strongest evidence behind it for coding agents: **gather co
 
 - Do not approve a claim without file/line evidence.
 - Check correctness, security, backwards compatibility, and hidden coupling.
+- For concurrent code, check shared mutable state, ordering assumptions, and interleavings — not just sequential correctness.
 - Look for missing tests on the changed paths.
 - Report findings with severity; escalate when risk is high or ambiguous.
 
@@ -68,8 +69,16 @@ The pattern with the strongest evidence behind it for coding agents: **gather co
 
 - Preserve behavior; do not mix behavior changes into the refactor.
 - Delete complexity before adding abstraction.
+- Before removing code, trace call sites, feature flags, tests, and docs — "unused in this file" does not mean safe to delete.
 - Prove equivalence with existing tests or golden output.
 - Keep diffs reviewable.
+
+### optimize — performance work, slow path, hot loop
+
+- Measure first: profile or benchmark to find the real hotspot. Do not optimize what merely looks expensive.
+- Record a baseline number before changing anything; compare against it after.
+- Change one thing at a time and keep correctness tests green.
+- Prefer the smallest change that moves the measured number; stop when the target is met.
 
 ### migrate — schema, data, or infra change (terraform, k8s, migrations)
 
@@ -77,6 +86,20 @@ The pattern with the strongest evidence behind it for coding agents: **gather co
 - Prefer staged, reversible changes.
 - Validate against a non-production target first when possible.
 - Document operational risk and recovery steps.
+
+### upgrade — dependency or library version bump
+
+- Read the changelog, release notes, or migration guide for breaking changes before editing.
+- Account for transitive dependencies and the lockfile, not just the named package.
+- Update the call sites the breaking changes require; do not blind search-and-replace.
+- Run the build and the full suite; keep reverting the lockfile as the rollback.
+
+### integrate — calling an external API, service, or tool
+
+- Read the contract; do not infer behavior from the name or a single sample call.
+- Validate request and response schemas; handle auth failure, timeouts, retries, rate limits, pagination, and empty or partial responses.
+- Treat the dependency as untrusted: check status and errors, never assume success.
+- Test the error paths, not just the happy path.
 
 ### spike — prototype, proof-of-concept, unknown library
 
@@ -92,7 +115,3 @@ The pattern with the strongest evidence behind it for coding agents: **gather co
 - List the top two hypotheses and the test that would discriminate them.
 - Collect missing information before changing more code.
 - Consider delegating a fresh review.
-
-## Why this exists
-
-Empirical work is consistent: _naming a persona_ ("act as an expert debugger") does not reliably change model behavior, while specifying a _procedure_ does. These modes are procedures aimed at the situations models handle worst — thrashing, faking green, skipping reproduction, running destructive commands, migrating without a rollback. Their effect on any given agent is not measured here; treat them as disciplined defaults, not a guarantee.
