@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coding-posture-engine"
+version = "0.1.0"
+description = "Task-aware operating modes for Hermes, Claude Code, Codex, and generic Pi-style coding agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Alexei Ledenev"}]
+keywords = ["hermes-agent", "coding-agents", "claude-code", "codex", "prompting", "agent-policy"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License"
+]
+
+[project.scripts]
+coding-posture = "coding_posture_engine.cli:main"
+
+[project.entry-points."hermes_agent.plugins"]
+coding-posture-engine = "coding_posture_engine.hermes_entrypoint"
+
+[tool.setuptools]
+packages = ["coding_posture_engine"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+coding_posture_engine = ["postures.json"]
