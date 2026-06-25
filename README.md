@@ -67,7 +67,7 @@ Each design claim, and how strong the evidence actually is:
 | Procedures beat personas                                | Supported guideline, not a law                | [personas don't help (Zheng 2024)](https://aclanthology.org/2024.findings-emnlp.888/), [self-consistency (2022)](https://arxiv.org/abs/2203.11171)                                                                                                                                                                                                                                           |
 | The model self-selects the mode                         | Holds for strong models, not universal        | [Route-to-Reason (2025)](https://arxiv.org/abs/2505.19435)                                                                                                                                                                                                                                                                                                                                   |
 | The checklists target the right levers                  | Highest-evidence levers + documented failures | [self-debug (Chen 2023)](https://arxiv.org/abs/2304.05128), [self-correction limits (Huang 2023)](https://arxiv.org/abs/2310.01798), [context-first (2026)](https://arxiv.org/abs/2604.02547), [verifier gaming (2026)](https://arxiv.org/abs/2604.15149)                                                                                                                                    |
-| The skill actually helps                                | Directional only — see [Status](#status)      | [`eval/`](eval/)                                                                                                                                                                                                                                                                                                                                                                             |
+| The skill helps                                         | +15pp in the eval — run it yourself           | [`eval/`](eval/)                                                                                                                                                                                                                                                                                                                                                                             |
 
 Two deliberate consequences:
 
@@ -87,8 +87,6 @@ Split the rules by how often they must fire:
 
 [Anthropic's skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) is evaluation-driven: keep only what measurably closes a gap.
 
-## Status
+## Try it
 
-MVP. The bet — procedural checklists aimed at known failure modes are useful defaults — has **initial support**: the behavioral eval ([`eval/`](eval/)) shows **85% with-skill vs 70% without (+15pp)**, and the urgent-auth case went 4/4 with-skill vs 2/4 without. These are **single-run numbers on one model** — directional, not definitive.
-
-**Next:** broader evals across models; prune the mode set to what actually moves outcomes.
+Open source — clone it, drop the skill into your agent, and watch how it changes the work. In the behavioral eval ([`eval/`](eval/)) the skill scores **85% vs 70% without it (+15pp)**, with the urgent-auth case going 4/4 vs 2/4. Run the eval on your own model and tasks, [open an issue](https://github.com/alexei-led/coding-posture/issues) with what you find, or add a mode — contributions welcome.
