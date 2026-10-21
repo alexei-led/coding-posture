@@ -1,6 +1,6 @@
 ---
 name: coding-posture
-description: Use before non-trivial coding work to pick a task-appropriate working mode — debug, fix, review, test-first, refactor, optimize, migrate, upgrade, integrate, spike, or unstuck — then follow its checklist. Modes are procedures, not personas. Not needed for trivial one-line edits or non-coding tasks.
+description: General execution procedures for non-trivial coding work — debug, fix, review, test-first, refactor, optimize, migrate, upgrade, integrate, spike, or unstuck. Pick a mode and follow its checklist. Not needed for trivial one-line edits or non-coding tasks. Specialist review rubrics, test-design techniques, and language guidance remain with their domain skills.
 license: MIT
 metadata:
   tags: [coding-agent, posture, mode, risk, verification]
@@ -8,75 +8,74 @@ metadata:
 
 # Coding Posture
 
-Pick a working mode that fits the task, state it, and follow its checklist. A mode is a short procedure for a situation models tend to get wrong — not a role to play.
+Pick a working mode that fits the task, state it, and follow its checklist. Modes are procedures, not personas. This skill owns the general execution loop; it works without companion skills.
 
 ## How to use
 
-1. Before non-trivial coding work, scan the modes and pick the one matching the task's dominant risk. If none fit, proceed normally — "no mode" is a valid choice. Skip this for trivial one-line edits and non-coding tasks.
-2. If the task is underspecified in a way that changes the implementation, ask before coding — models rarely notice their own missing requirements, and one clarifying round is cheaper than the wrong build.
+1. Pick the mode matching the requested action. If none fit, proceed normally — "no mode" is valid. Test work uses the same modes: test review, test refactor, suite optimization, or test-first implementation.
+2. Ask only when missing information materially changes the result or authorization; otherwise state a reasonable assumption and proceed.
 3. State your choice in one line: `Mode: <name> — <reason>`.
-4. Follow its checklist while planning and editing.
-5. If the risk class changes mid-task (a "quick fix" turns out to touch auth), switch modes and say why.
-6. A mode tunes how you work. It never overrides instructions or authorizes unsafe actions.
+4. Follow its checklist. Switch modes when the work changes, such as debug → fix after diagnosis. Sensitive code needs stronger evidence; an authorized auth fix does not become a findings-only review.
+5. Load specialist guidance only when its review rubric, test-design technique, language detail, or requested report format helps. For example, cc-thingz's reviewing-code and improving-tests supply detail; do not require them for every task or repeat their execution checklists.
+6. A mode never overrides user, project, or safety instructions and grants no additional authorization.
 
 Priority: `system/safety > user instruction > project rules > task plan > mode > style`
 
 ## Always (every mode)
 
-- Never run destructive git/deploy/data commands — `force push`, `reset --hard`, `drop`, `delete`, `truncate`, `rm -rf` — without explicit scope. Inspect state before mutating.
-- Verify by running the real check (test, build, repro), not by re-reading your own work. Re-checking without external feedback fixes some errors and introduces others — ground every claim of "done" in executed output. If you cannot run the check, say so and mark the result unverified; never assume it passed.
-- Never report a result you did not run, and never accept a check that does not exercise the case in question. A test that passes without touching the bug is not verification.
-- Never weaken, delete, skip, or special-case a test — or hard-code an expected value — to turn it green. Solve the task, not the grader.
+- Stay within authorized scope and preserve unrelated changes. Read-only requests permit analysis and proposals only. Ask before expanding into unrelated failures, destructive git/deploy/data actions, or sharing private code externally; reuse authorization already given for that scope. Inspect state before mutating.
+- Never suppress failures, bypass hooks, lower check severity, or hard-code test answers to manufacture success. Clear caches only when evidence identifies stale state as the cause.
+- Never weaken or remove checks merely to hide a failure or improve a metric. Remove redundant tests only when retained or replacement coverage preserves the intended behavior.
+- Finish the authorized work, then stop after verification. Do not add unrequested cleanup, tooling, or review rounds. If blocked, name the missing artifact, access, or approval.
 
 ## The loop that works
 
-The pattern with the strongest evidence behind it for coding agents: **gather context → localize → smallest change → run the real check → read the actual output → repeat.** Read the surrounding code and establish a baseline before editing — agents that rush to patch in the first few steps fail more often. Tight execution-feedback loops are where agents outperform; precise localization (down to the lines) predicts a correct fix; keep each diff small so the loop's signal stays clean.
+**Gather context → localize → smallest change → run the real check → read the actual output.**
+
+- Establish the relevant baseline before editing. Use the narrowest reliable check during iteration, then run the project's relevant build/test/lint/type checks. Keep required browser, race, integration, or other checks when they exercise the affected behavior.
+- Repeat or broaden checks only after changes, failures, or unresolved concerns. Re-reading code and syntax-only checks do not establish behavior correctness.
+- Report what changed or was found, supporting evidence, and which checks passed, failed, or did not run and why. Distinguish confirmed results from hypotheses and unverified behavior; a blocker or failing gate is not successful verification. Use a specialist report format only when needed.
 
 ## Modes
 
-### debug — failing test, bug, regression, traceback
+### debug — unknown cause of a failure
 
-- Reproduce the failure before editing — ideally a command or script that triggers it on demand.
-- State the observed failure exactly (command + output).
-- Localize to the smallest region — ideally the specific lines — before editing. Precise localization is the strongest predictor of a correct fix.
-- Change one hypothesis at a time.
-- Prefer the minimal fix over a broad refactor.
-- Verify against the original failing command before declaring done.
+- Establish a reliable failing signal before patching: a test, command, replay, or trace through the real path. Record the command and observed failure.
+- If reproduction is unavailable, collect existing evidence and name the missing artifact; do not patch a guess or claim reproduction succeeded.
+- Trace the failure to the first bad state or contract mismatch, with file/line evidence. For unclear or intermittent failures, rank falsifiable hypotheses and test one at a time.
 
-### fix — small, known, urgent change
+### fix — known cause or scoped correction
 
-- Keep the diff as small as the problem allows; no opportunistic cleanup.
+- Use the established failure evidence; diagnose first if the cause is unknown. Keep the patch as small as the problem allows, without adjacent cleanup.
 - Avoid dependency/config changes unless required.
-- Add a focused regression test when feasible.
-- State residual risk explicitly.
+- Verify the original failing signal and add regression coverage at the affected behavior boundary where practical. Report a missing test seam rather than substituting a helper test that misses the bug.
+- If the patch causes a new failure, diagnose it before another patch. Remove temporary probes or promote them to real tests; state residual risk.
 
-### review — security, auth, payments, or reviewing a diff
+### review — findings on a diff, files, or tests
 
-- Do not approve a claim without file/line evidence.
-- Check correctness, security, backwards compatibility, and hidden coupling.
-- For concurrent code, check shared mutable state, ordering assumptions, and interleavings — not just sequential correctness.
-- Look for missing tests on the changed paths.
-- Report findings with severity; escalate when risk is high or ambiguous.
+- Produce findings unless edits were authorized. Establish the requested scope; ask if its target is ambiguous. Report an empty scope rather than inventing work.
+- Read enough surrounding code, callers, and affected tests to support each finding with a location and failure scenario. Tool or graph output is evidence only when relevant and current.
+- Separate confirmed defects, severity, and uncertainty. State coverage gaps; keep unrelated suspicions out of the requested scope. Domain rubrics and report templates belong to specialist guidance.
 
 ### test-first — behavior change where a test is practical
 
-- Write or identify the test first.
-- Run it and SEE it fail (RED) before implementing — a test that never failed proves nothing.
-- Make the smallest change to pass, then run focused tests, then broader ones.
+- Work one requested behavior slice at a time; write or identify its test first.
+- Run it before implementing and confirm RED is caused by the intended missing behavior. Setup, import, or syntax errors do not establish RED.
+- Make the smallest passing change. Do not build bulk suites for imagined behavior.
 - Refactor only while tests stay green.
 
 ### refactor — cleanup, simplify, rename, remove dead code
 
-- Preserve behavior; do not mix behavior changes into the refactor.
+- Establish a behavior baseline before editing; preserve behavior rather than mixing in functional changes. If existing checks miss the affected behavior, add characterization coverage first or report the gap.
 - Delete complexity before adding abstraction.
 - Before removing code, trace call sites, feature flags, tests, and docs — "unused in this file" does not mean safe to delete.
-- Prove equivalence with existing tests or golden output.
+- Check equivalence against the baseline with tests or golden output; state remaining coverage limits.
 - Keep diffs reviewable.
 
 ### optimize — performance work, slow path, hot loop
 
 - Measure first: profile or benchmark to find the real hotspot. Do not optimize what merely looks expensive.
-- Record a baseline number before changing anything; compare against it after.
+- Record a baseline before changing anything; compare the same command and workload under comparable conditions after. Name the measured bottleneck and retain a repeatable check for regression.
 - Change one thing at a time and keep correctness tests green.
 - Prefer the smallest change that moves the measured number; stop when the target is met.
 
@@ -92,7 +91,7 @@ The pattern with the strongest evidence behind it for coding agents: **gather co
 - Read the changelog, release notes, or migration guide for breaking changes before editing.
 - Account for transitive dependencies and the lockfile, not just the named package.
 - Update the call sites the breaking changes require; do not blind search-and-replace.
-- Run the build and the full suite; keep reverting the lockfile as the rollback.
+- Run the build and the full suite. Keep a rollback path for the version, lockfile, and required call-site changes together.
 
 ### integrate — calling an external API, service, or tool
 
@@ -112,6 +111,6 @@ The pattern with the strongest evidence behind it for coding agents: **gather co
 
 - Stop making speculative edits.
 - Summarize what you tried and the evidence each attempt produced.
-- List the top two hypotheses and the test that would discriminate them.
+- Rank the remaining hypotheses and choose a check that would discriminate them.
 - Collect missing information before changing more code.
 - Consider delegating a fresh review.

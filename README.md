@@ -4,6 +4,8 @@ Task-aware working modes for coding agents. One `SKILL.md` file: before non-triv
 
 It exists to stop agents from behaving like optimistic elevators with write access: thrashing on a stuck bug, faking green tests, skipping reproduction, running destructive commands, migrating without a rollback.
 
+Coding-posture owns the general execution procedures. It works on its own; specialist skills are optional detail, not a second required checklist. See [0.6.0 release notes](CHANGELOG.md#060) for the behavior changes.
+
 **Works with** Hermes · Claude Code · Codex · Cursor · Pi — any [`SKILL.md`](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills)-compatible agent.
 
 ## How the agent uses it
@@ -23,25 +25,26 @@ flowchart TD
 
 ## Modes
 
-| Mode         | Use when                                 | Core discipline                                     |
-| ------------ | ---------------------------------------- | --------------------------------------------------- |
-| `debug`      | failing test, bug, regression            | reproduce first, one hypothesis at a time           |
-| `fix`        | small known urgent change                | smallest diff, no opportunistic cleanup             |
-| `review`     | security/auth/payments, reviewing a diff | no approval without file/line evidence              |
-| `test-first` | behavior change, tests practical         | see RED before implementing, never fake green       |
-| `refactor`   | cleanup, simplify, rename                | preserve behavior, trace call sites before deleting |
-| `optimize`   | performance work, hot path               | measure first, baseline before/after                |
-| `migrate`    | schema/data/infra change                 | rollback path before touching state                 |
-| `upgrade`    | dependency or version bump               | read breaking changes, no blind search-replace      |
-| `integrate`  | calling an external API/service          | read the contract, handle the error paths           |
-| `spike`      | prototype, PoC, unknown library          | isolate, end with a verdict                         |
-| `unstuck`    | repeated failures, thrashing             | stop editing, summarize evidence, narrow hypotheses |
+| Mode         | Use when                            | Core discipline                                           |
+| ------------ | ----------------------------------- | --------------------------------------------------------- |
+| `debug`      | failure with an unknown cause       | establish a failing signal, test one hypothesis at a time |
+| `fix`        | known cause or scoped correction    | smallest patch, verify the original failure               |
+| `review`     | findings on a diff, files, or tests | scoped findings with locations and failure scenarios      |
+| `test-first` | behavior change, tests practical    | one slice; RED must fail for the intended reason          |
+| `refactor`   | cleanup, simplify, rename           | preserve behavior, trace call sites before deleting       |
+| `optimize`   | performance work, hot path          | measure first, baseline before/after                      |
+| `migrate`    | schema/data/infra change            | rollback path before touching state                       |
+| `upgrade`    | dependency or version bump          | read breaking changes, no blind search-replace            |
+| `integrate`  | calling an external API/service     | read the contract, handle the error paths                 |
+| `spike`      | prototype, PoC, unknown library     | isolate, end with a verdict                               |
+| `unstuck`    | repeated failures, thrashing        | stop editing, summarize evidence, narrow hypotheses       |
 
 **Always — in every mode:**
 
 - Verify by running the real check (test, build, repro); never by re-reading.
-- Never report a result you didn't run; never weaken, delete, or game a test to go green.
-- No destructive commands (`force push`, `reset --hard`, `drop`, `rm -rf`) without explicit scope.
+- Report checks as passed, failed, or not run with a reason. A failing gate or blocker is not successful verification.
+- Never hide failures or weaken coverage to improve a result; redundant tests may be removed when coverage is preserved.
+- Stay within authorized scope, preserve unrelated changes, and respect read-only requests. Destructive actions and external sharing of private code require scoped authorization.
 
 ## Install
 
@@ -93,7 +96,7 @@ Each design claim, and how strong the evidence actually is:
 | Procedures beat personas                                | Supported guideline, not a law                | [personas don't help (Zheng 2024)](https://aclanthology.org/2024.findings-emnlp.888/), [self-consistency (2022)](https://arxiv.org/abs/2203.11171)                                                                                                                                                                                                                                           |
 | The model self-selects the mode                         | Holds for strong models, not universal        | [Route-to-Reason (2025)](https://arxiv.org/abs/2505.19435)                                                                                                                                                                                                                                                                                                                                   |
 | The checklists target the right levers                  | Highest-evidence levers + documented failures | [self-debug (Chen 2023)](https://arxiv.org/abs/2304.05128), [self-correction limits (Huang 2023)](https://arxiv.org/abs/2310.01798), [context-first (2026)](https://arxiv.org/abs/2604.02547), [verifier gaming (2026)](https://arxiv.org/abs/2604.15149)                                                                                                                                    |
-| The skill helps                                         | +15pp in the eval — run it yourself           | [`eval/`](eval/)                                                                                                                                                                                                                                                                                                                                                                             |
+| The updated skill helps                                 | Not yet measured for 0.6.0                    | [Eval cases and limitations](eval/README.md)                                                                                                                                                                                                                                                                                                                                                 |
 
 Two deliberate consequences:
 
@@ -113,6 +116,14 @@ Split the rules by how often they must fire:
 
 [Anthropic's skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) is evaluation-driven: keep only what measurably closes a gap.
 
+### With cc-thingz
+
+Use coding-posture for ordinary debugging, fixes, review execution, test-first work, refactoring, and optimization, including work on tests. Security-sensitive fixes stay implementation tasks with stronger evidence requirements; `review` does not silently make them findings-only.
+
+Load cc-thingz's `reviewing-code` when its severity rubric, language checks, review depth, or report format is useful. Load `improving-tests` for test seams, mocks, assertions, characterization techniques, or framework and suite-speed detail. Language and toolchain guidance stays in cc-thingz. Those specialists do not need to be loaded for every coding task.
+
+This release changes only coding-posture. Older cc-thingz installations can still advertise overlapping fix/TDD workflows; their routing must be narrowed separately. No companion skill is installed, renamed, or removed here. Existing mode names and plugin installation paths are unchanged.
+
 ## Try it
 
-Open source — clone it, drop the skill into your agent, and watch how it changes the work. In the behavioral eval ([`eval/`](eval/)) the skill scores **85% vs 70% without it (+15pp)**, with the urgent-auth case going 4/4 vs 2/4. Run the eval on your own model and tasks, [open an issue](https://github.com/alexei-led/coding-posture/issues) with what you find, or add a mode — contributions welcome.
+Run the [behavioral eval](eval/README.md) and [execution fixtures](tests/skill-evals/coding-posture/fixtures/README.md) on your own model and tasks. The earlier five-case result of 85% versus 70% is historical; it does not establish the effect of 0.6.0, its expanded cases, or newer models. Injected answer evals also do not prove skill activation or tool execution. [Open an issue](https://github.com/alexei-led/coding-posture/issues) with reproducible results.

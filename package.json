@@ -1,17 +1,32 @@
 {
   "name": "coding-posture",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A coding-posture skill: pick a task-appropriate working mode and follow its checklist. Works in any SKILL.md-compatible agent (Hermes, Claude Code, Codex, Cursor, Pi).",
-  "license": "MIT",
   "keywords": [
-    "skill",
-    "skill-md",
-    "pi-package",
-    "hermes-agent",
     "claude-code",
     "codex",
-    "coding-agents"
+    "coding-agents",
+    "hermes-agent",
+    "pi-package",
+    "skill",
+    "skill-md"
   ],
+  "license": "MIT",
+  "files": [
+    ".agents/plugins/",
+    ".claude-plugin/",
+    ".codex-plugin/",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "always-on-snippet.md",
+    "eval/",
+    "scripts/",
+    "skills/",
+    "tests/"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
   "pi": {
     "skills": [
       "./skills"

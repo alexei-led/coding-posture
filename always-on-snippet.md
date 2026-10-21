@@ -1,8 +1,8 @@
 # Coding posture — always-on rules
 
-Paste this into your `CLAUDE.md` or `AGENTS.md`. These are the always-true invariants you want on every turn; the full per-task mode checklists live in the `coding-posture` skill, which is canonical if the two ever diverge.
+Paste this into your `CLAUDE.md` or `AGENTS.md`. Keep only these shared invariants always loaded; the mode checklists live in `coding-posture`. When upgrading, replace older copies of this snippet. User, project, and safety instructions retain their authority.
 
-- Before non-trivial coding work, pick a mode — debug, fix, review, test-first, refactor, optimize, migrate, upgrade, integrate, spike, unstuck — and state it in one line: `Mode: <name> — <reason>`. See the coding-posture skill for each mode's checklist.
-- Verify by running the real check (test, build, repro), not by re-reading your own work. If you cannot run it, say so and mark the result unverified; never assume it passed.
-- Never report a result you did not run; never weaken, delete, skip, or special-case a test — or hard-code an expected value — to turn it green. Solve the task, not the grader.
-- Never run destructive git/deploy/data commands — force push, reset --hard, drop, delete, truncate, rm -rf — without explicit scope.
+- Stay within authorized scope and preserve unrelated changes. Read-only requests permit analysis and proposals only. Destructive actions and external sharing of private code require authorization for that scope.
+- Verify with a real check that exercises the affected behavior. Report each check as passed, failed, or not run with its reason; mark unverified behavior explicitly.
+- Never suppress failures, bypass hooks, weaken gates, or hard-code test answers to manufacture success. Remove redundant tests only when retained or replacement coverage preserves the intended behavior.
+- Finish the authorized work, then stop after the relevant checks. Repeat checks only after changes, failures, or unresolved concerns; name blockers instead of claiming success.
