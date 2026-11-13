@@ -64,6 +64,23 @@ Repeat each model/effort condition in fresh workspaces and report per-case resul
 
 Test activation separately in the actual host, exposing installed skill descriptions without force-loading the body. Ordinary fixes, TDD, refactors, and optimization should choose posture without requiring both specialists. Specialist review/test requests should select relevant detail without another execution menu. Include a trivial edit and a non-coding task as negative controls. Activation is a host behavior, not a product selection engine.
 
+## Instruction simplification pilot
+
+A paired execution pilot on 2026-11-13 compared `63028e2` with `c61bbf7`,
+combined with the corresponding shared instructions and task skill. It covered
+fixes, read-only reviews, missing evidence, and harness/model-context selection
+on Pi with OpenAI and Claude Code through `ce` with z.ai. All eight simplified
+conditions passed their acceptance checks; six of eight original conditions
+passed. The two corrected failures were in cc-thingz's harness-to-provider
+inference, so they do not establish an isolated coding-posture gain. No general
+speed or cost improvement was demonstrated. Pi Anthropic authentication failed
+before either arm produced a response and was excluded.
+
+The [full report](https://github.com/alexei-led/cc-thingz/blob/8d01c80b0303b2da39b32407daf704c69b2749c3/docs/instruction-simplification-eval.md)
+records conditions, component commits, results, and limitations. This pilot
+force-supplied instruction bodies; automatic skill activation and long-horizon
+behavior remain unverified.
+
 ## Results and limits
 
 Local tooling checks: `npm test`, `bash -n eval/run-skill-evals.sh`, `shellcheck eval/run-skill-evals.sh`, and `shfmt -d eval/run-skill-evals.sh`. The Node tests use a local fake CLI to verify assembly, failure propagation, cleanup, and preservation of existing directories; they make no model calls.
