@@ -8,13 +8,13 @@ metadata:
 
 # Coding Posture
 
-Pick a working mode that fits the task, state it, and follow its checklist. Modes are procedures, not personas. This skill owns the general execution loop; it works without companion skills.
+Pick a working mode that fits the task and follow its checklist. Modes are procedures, not personas. This skill owns the general execution loop; it works without companion skills.
 
 ## How to use
 
 1. Pick the mode matching the requested action. If none fit, proceed normally — "no mode" is valid. Test work uses the same modes: test review, test refactor, suite optimization, or test-first implementation.
 2. Ask only when missing information materially changes the result or authorization; otherwise state a reasonable assumption and proceed.
-3. State your choice in one line: `Mode: <name> — <reason>`.
+3. State the mode when it helps the user understand the work.
 4. Follow its checklist. Switch modes when the work changes, such as debug → fix after diagnosis. Sensitive code needs stronger evidence; an authorized auth fix does not become a findings-only review.
 5. Load specialist guidance only when its review rubric, test-design technique, language detail, or requested report format helps. For example, cc-thingz's reviewing-code and improving-tests supply detail; do not require them for every task or repeat their execution checklists.
 6. A mode never overrides user, project, or safety instructions and grants no additional authorization.
@@ -40,15 +40,15 @@ Priority: `system/safety > user instruction > project rules > task plan > mode >
 
 ### debug — unknown cause of a failure
 
-- Establish a reliable failing signal before patching: a test, command, replay, or trace through the real path. Record the command and observed failure.
-- If reproduction is unavailable, collect existing evidence and name the missing artifact; do not patch a guess or claim reproduction succeeded.
+- Establish a reliable failing signal when feasible: a test, command, replay, or trace through the real path. Record the command and observed failure.
+- If reproduction is unavailable, collect existing evidence and name the gap. Patch only an evidenced contract violation with regression coverage; do not patch a guess or claim reproduction succeeded.
 - Trace the failure to the first bad state or contract mismatch, with file/line evidence. For unclear or intermittent failures, rank falsifiable hypotheses and test one at a time.
 
 ### fix — known cause or scoped correction
 
 - Use the established failure evidence; diagnose first if the cause is unknown. Keep the patch as small as the problem allows, without adjacent cleanup.
 - Avoid dependency/config changes unless required.
-- Verify the original failing signal and add regression coverage at the affected behavior boundary where practical. Report a missing test seam rather than substituting a helper test that misses the bug.
+- Verify the original failing signal when available and add regression coverage at the affected behavior boundary where practical. Report a missing repro or test seam rather than substituting a helper test that misses the bug.
 - If the patch causes a new failure, diagnose it before another patch. Remove temporary probes or promote them to real tests; state residual risk.
 
 ### review — findings on a diff, files, or tests
