@@ -1,6 +1,6 @@
 {
   "name": "coding-posture",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Task-aware working modes for coding agents — debug, fix, review, test-first, refactor, optimize, migrate, upgrade, integrate, spike, unstuck",
   "author": {
     "name": "Alexei Ledenev",

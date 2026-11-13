@@ -9,15 +9,15 @@
     "homepage": "https://github.com/alexei-led/coding-posture",
     "repository": "https://github.com/alexei-led/coding-posture",
     "license": "MIT",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "plugins": [
     {
       "name": "coding-posture",
       "source": ".",
       "description": "Task-aware working modes for coding agents — debug, fix, review, migrate, and more",
-      "version": "0.6.0"
+      "version": "0.6.1"
     }
   ],
-  "version": "0.6.0"
+  "version": "0.6.1"
 }

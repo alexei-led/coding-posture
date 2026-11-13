@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.1]
+
+### Changed
+
+- Mode announcements are optional when they do not help explain the work.
+- When the original incident cannot be reproduced, an evidenced contract
+  violation may be corrected only with regression coverage. Guessing a fix or
+  claiming unverified behavior remains prohibited.
+
+### Verification
+
+A small paired execution pilot found no scope or verification violations in the
+tested cases. It did not establish an isolated coding-posture quality, cost, or
+latency improvement. Automatic skill activation and long tasks remain unverified.
+
+[Changes since v0.6.0](https://github.com/alexei-led/coding-posture/compare/v0.6.0...v0.6.1)
+
 ## [0.6.0]
 
 ### Summary
